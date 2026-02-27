@@ -1,0 +1,17 @@
+{
+  "name": "express-visitsancataldo",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "Luca Riggi",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "mysql2": "^3.18.2"
+  }
+}
