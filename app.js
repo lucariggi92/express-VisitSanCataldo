@@ -1,9 +1,15 @@
 import express from 'express';
+import contentsRouter from "./routers/contents.js"
+import handleError from './middlewares/handleError.js';
 
 const app = express();
-const port =3000;
+const port = process.env.SERVER_PORT;
 
-app.listen(port, function(){
+app.use("/api/contents", contentsRouter)
+
+app.use(handleError)
+
+app.listen(port, ()=>{
     console.log(`Il server è in ascolto sulla porta ${port}`)
     
 });
