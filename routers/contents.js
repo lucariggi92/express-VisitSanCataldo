@@ -3,6 +3,6 @@ import contentController from "../controllers/contentController.js"
 
 const router = express.Router();
 
-router.get("/", contentController.index );
-router.get("/:slug", contentController.show)
+router.get("/", contentController.indexContent );
+router.get("/:slug", contentController.showContent)
 export default router;

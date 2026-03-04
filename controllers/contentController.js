@@ -1,10 +1,10 @@
 import connection from "../db/dbConnection.js"
 
 
-function index(req, res, next) {
+function indexContent(req, res, next) {
     const category = req.query.category;
 
-    let query = `SELECT contents.* , GROUP_CONCAT(img.url) AS tutte_le_foto 
+    let query = `SELECT contents.* , GROUP_CONCAT(img.url ORDER BY img.img_posistion ASC) AS tutte_le_foto 
     FROM db_visit_project.contents 
     INNER JOIN img 
     ON contents.id = img.content_id 
@@ -32,9 +32,14 @@ function index(req, res, next) {
 
 }
 
-function show(req, res, next) {
+function showContent(req, res, next) {
     const id = req.params.id;
-    const query = "SELECT * FROM `contents` WHERE `id`=?";
+    const query = `SELECT contents.* , GROUP_CONCAT(img.url ORDER BY img.img_posistion ASC) AS tutte_le_foto 
+    FROM db_visit_project.contents 
+    INNER JOIN img 
+    ON contents.id = img.content_id 
+    WHERE id =? 
+    AND is_visible =1`;
 
     connection.query(query, [id], (err, results) => {
         if (err) return next(err);
@@ -52,4 +57,4 @@ function show(req, res, next) {
 
 }
 
-export default { index, show }
+export default { indexContent, showContent }
