@@ -1,9 +1,9 @@
 import express from "express";
-import itineraryController from "../controllers/itineraryController.js"
+import {indexItinerary, showItinerary} from "../controllers/itineraryController.js"
 
 const router = express.Router();
 
-router.get("/", itineraryController.indexItinerary );
-// router.get("/:slug", itineraryController.showItinerary)
-// export default router;
+router.get("/", indexItinerary );
+router.get("/:slug", showItinerary)
+export default router;
 

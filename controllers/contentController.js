@@ -1,6 +1,6 @@
 import connection from "../db/dbConnection.js"
 
-//--------------INDEX CONTENTS
+//--------------INDEX CONTENT
 function indexContent(req, res, next) {
 
     const category = req.query.params
@@ -41,7 +41,7 @@ function indexContent(req, res, next) {
 
 
 
-//--------------SHOW CONTENTS
+//--------------SHOW CONTENT
 function showContent(req, res, next) {
     const {slug} =req.params;
 
@@ -74,5 +74,5 @@ function showContent(req, res, next) {
 
 }
 
-//-------------------EXPORT FUNCTIONS
+//-------------------EXPORT FUNCTIONS CONTENT
 export default { indexContent, showContent }
