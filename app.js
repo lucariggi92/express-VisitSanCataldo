@@ -3,10 +3,15 @@ import contentsRouter from "./routers/contents.js"
 import notFound from "./middlewares/notFound.js"
 import itinerariesRouter from "./routers/itineraries.js"
 import categoriesRouter from "./routers/categories.js"
-import handleError from './middlewares/handleError.js';
+import handleError from './middlewares/handleError.js'
+import cors from "cors"
 
 const app = express();
 const port = process.env.SERVER_PORT;
+app.use(cors());
+
+app.use(express.static('public'));
+
 
 app.use("/api/contents", contentsRouter)
 app.use("/api/itineraries", itinerariesRouter)

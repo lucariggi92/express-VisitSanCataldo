@@ -3,7 +3,7 @@ import connection from "../db/dbConnection.js"
 //--------------INDEX CONTENT
 function indexContent(req, res, next) {
 
-    const category = req.query.params
+    const category = req.query.category
 
     //request category-->voglio mostare i contents in base alle category
  
