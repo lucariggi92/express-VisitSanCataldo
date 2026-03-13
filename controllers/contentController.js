@@ -3,10 +3,11 @@ import connection from "../db/dbConnection.js"
 //--------------INDEX CONTENT
 function indexContent(req, res, next) {
 
-    const category = req.query.category
+    const category = req.query.category;
+    const search = req.query.search;
 
     //request category-->voglio mostare i contents in base alle category
- 
+
     let query = `SELECT contents.*, img_sub.cover_image
         FROM contents
         LEFT JOIN (
@@ -19,18 +20,24 @@ function indexContent(req, res, next) {
             )
         ) AS img_sub ON contents.id = img_sub.content_id
         WHERE contents.is_visible = 1`
-    
+
     //CREO UN ARRAY PARAMS DOVE AGGIUNGERE le Category
     let params = []
 
     //FILTRI DINAMICI
-    //category
+    //filtro per categoria
     if (category) {
         query += " AND contents.category =?";
         params.push(category);
     }
-    
 
+    // filtro per titolo/categoria/tag
+    if (search) {
+    query += " AND (contents.category LIKE ? OR contents.title LIKE ? OR contents.tag LIKE ? OR contents.description LIKE ?)";
+    const searchTerm = `%${search}%`;
+    params.push(searchTerm, searchTerm, searchTerm, searchTerm)
+
+     }
 
 
     //CONNECTION
@@ -50,9 +57,9 @@ function indexContent(req, res, next) {
 
 //--------------SHOW CONTENT
 function showContent(req, res, next) {
-    const {slug} =req.params;
+    const { slug } = req.params;
 
-    
+
     const query = `SELECT contents.* , 
     GROUP_CONCAT(img.url ORDER BY img.img_position ASC) AS tutte_le_foto 
     FROM db_visit_project.contents 
@@ -66,7 +73,7 @@ function showContent(req, res, next) {
         if (err) return next(err);
         if (results.length === 0) {
             res.status(404);
-            return res.json({error: "404 NOT FOUND", message: "Contenuto non trovato"})
+            return res.json({ error: "404 NOT FOUND", message: "Contenuto non trovato" })
         }
 
         console.log(results)
