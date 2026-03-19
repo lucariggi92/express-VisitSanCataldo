@@ -96,7 +96,7 @@ function showContent(req, res, next) {
             return res.json({ error: "404 NOT FOUND", message: "Contenuto non trovato" });
         }
 
-        const content = contents[0];
+        const content = contents[0];//il content sarà l'unico oggetto dell'array con slug=?
         const contentId = content.id;
         const category = content.category;
 
@@ -104,58 +104,52 @@ function showContent(req, res, next) {
         let responseData = { ...content };
 
         // === IMMAGINI ===
-        // images_raw viene ottenuto dalla query base (GROUP_CONCAT) e va trasformato in un array.
+        // se ci sono immagini nel contents allora trasformale da stringa (GROUP_CONCAT) ---> array.
         responseData.images = [];
         if (content.images_raw) {
             responseData.images = content.images_raw
-                .split(",")
-                .filter(Boolean)
-                .map(filename => ({
+                .split(",") //divide le stringhe
+                .filter(Boolean) //elimina spazi vuoiti e i null
+                .map(filename => ({  // aggiunge l'url
                     url: `/images/${filename.trim()}`,
-                    thumbnail: `/images/${filename.trim()}`,
+
                 }));
         }
-        delete responseData.images_raw;
+        delete responseData.images_raw; //elimino l'imag_raw perchè sostituito con l'array di url
 
-        /**
-         * Step 3: Esegui una query dinamica per la categoria (food / poi / events / altro)
-         * e includi direttamente anche gli itinerari collegati.
-         *
-         * Questo ci permette di mantenere il controller semplice (solo 2 query totali):
-         * 1) baseQuery (content + immagini),
-         * 2) detailsQuery (dettagli categoria + itinerari).
-         */
-        let detailsQuery;
-
-        if (category === "cosa-mangiare") {
+        /*Query dinamica per la categoria (food / poi / events / altro)*/
+        let detailsQuery = null;
+        if (content.category === "cosa-mangiare") {
             detailsQuery = `
-SELECT
-  f.id AS food_id,
-  f.recipe,
-  f.ingredients,
-  f.where_to_eat,
-  f.season,
-  f.pairing
-FROM food AS f
-WHERE f.content_id = ?
-GROUP BY f.id;
+        SELECT
+         f.id AS food_id,
+        f.recipe,
+        f.ingredients,
+        f.where_to_eat,
+        f.season,
+        f.pairing
+        FROM food AS f
+        WHERE f.content_id = ?
+        GROUP BY f.id;
 `;
         } else if (category === "luoghi-da-visitare") {
             detailsQuery = `
-SELECT
-  GROUP_CONCAT(DISTINCT CONCAT_WS('||', poi.id, poi.latitude, poi.longitude, poi.address, poi.minor_point_of_interest) SEPARATOR ';;') AS poi_raw
-FROM points_of_interest AS poi
-WHERE poi.content_id = ?
-GROUP BY poi.content_id;
-`;
+        SELECT
+         poi.id,
+         poi.latitude,
+         poi.longitude,
+        poi.address,
+        poi.minor_point_of_interest
+        FROM points_of_interest AS poi
+        WHERE poi.content_id = ?`;
+
         } else if (category === "eventi") {
             detailsQuery = `
-SELECT
-  GROUP_CONCAT(DISTINCT CONCAT_WS('||', ev.id, ev.location, ev.date) SEPARATOR ';;') AS events_raw
-FROM events AS ev
-WHERE ev.content_id = ?
-GROUP BY ev.content_id;
-`;
+        SELECT id, location, date
+        FROM events
+        WHERE content_id = ?
+        LIMIT 1`;
+
         } else {
             // Per categorie che non hanno tabelle dedicate, non recuperiamo niente
             detailsQuery = null;
@@ -185,40 +179,22 @@ GROUP BY ev.content_id;
 
             // Luoghi da visitare
             if (category === "luoghi-da-visitare") {
-                responseData.points_of_interest = [];
-                if (row.poi_raw) {
-                    responseData.points_of_interest = row.poi_raw
-                        .split(";;")
-                        .filter(Boolean)
-                        .map(item => {
-                            const [id, latitude, longitude, address, minor_point_of_interest] = item.split("||");
-                            return {
-                                id: id ? Number(id) : null,
-                                latitude: latitude ? Number(latitude) : null,
-                                longitude: longitude ? Number(longitude) : null,
-                                address: address || null,
-                                minor_point_of_interest: minor_point_of_interest || null,
-                            };
-                        });
-                }
+                responseData.points_of_interest = detailsRows.map(row => ({
+                    id: row.id,
+                    latitude: row.latitude,
+                    longitude: row.longitude,
+                    address: row.address,
+                    minor_point_of_interest: row.minor_point_of_interest,
+                }));
             }
 
             // Eventi
             if (category === "eventi") {
-                responseData.events = [];
-                if (row.events_raw) {
-                    responseData.events = row.events_raw
-                        .split(";;")
-                        .filter(Boolean)
-                        .map(item => {
-                            const [id, location, date] = item.split("||");
-                            return {
-                                id: id ? Number(id) : null,
-                                location: location || null,
-                                date: date || null,
-                            };
-                        });
-                }
+                responseData.events = detailsRows.map(row => ({
+                    id: row.id,
+                    location: row.location,
+                    date: row.date,
+                }));
             }
 
             return res.json(responseData);
